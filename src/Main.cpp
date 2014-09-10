@@ -1,9 +1,8 @@
 #include <iostream>
 #include <cstdlib>
 #include <string.h>
-#include <ImageP.h>
+#include <ImageProc.h>
 
-using namespace imageNS;
 
 void usage(const char *exename)
 {
@@ -34,10 +33,7 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	ImageP one;
-	one.color_to_bw(argv[1], argv[2], type, width, height);
-	int i = one(0,41,0);
-	std::cout << i <<std::endl;
-
+	ImageProc::color_to_bw(argv[1], argv[2], width, height);
+	
 	return 0;
 }
