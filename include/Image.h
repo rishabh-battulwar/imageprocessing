@@ -163,9 +163,9 @@ void Image::write_image(const char *filename, int width, int height)
 int Image::operator()(int K, int L, int M)
     {
     	if(!(strcmp(imgtype, "color")))
-      	return (int)imgdata[(K-1)*cols*channels + (L-1)*channels + M];
+      	return (int)imgdata[(K)*cols*channels + (L)*channels + M];
       if(!(strcmp(imgtype, "bw")))
-      	return (int)imgdata[(K-1)*cols*channels + (L-1)*channels + M];
+      	return (int)imgdata[(K)*cols*channels + (L)*channels + M];
       else
         return 1;
     }
