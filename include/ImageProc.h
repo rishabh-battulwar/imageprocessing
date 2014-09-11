@@ -25,8 +25,11 @@ void ImageProc::color_to_bw(const char *infile, const char *outfile, int width, 
 
 	// for(int i = 0; i < width; i++)
 	// 	for(int j = 0; j < height; j++)
-	// 		img_bw.imgdata[(i*width+j)*height+0] = img_color(i,j,0)*0.21 + img_color(i,j,1)*0.72 + img_color(i,j,2)*0.07;
-
+	std::cout << img_bw(3,3,0) << std::endl;
+	std::cout << img_color(35,35,0) <<" "<< img_color(35,35,1) <<" "<< img_color(35,35,2) << std::endl;
+	img_bw.imgdata[(3-1)*width*1 + (3-1)*1 + 0] = img_color(3,3,0)*0.21 + img_color(3,3,1)*0.72 + img_color(3,3,2)*0.07;
+	std::cout << img_bw(3,3,0) << std::endl;
+	std::cout << (int)img_bw.imgdata[(3-1)*width*1 + (3-1)*1 + 0] << std::endl;
 	img_color.write_image(outfile, width, height);
 
 	//delete img_color;
