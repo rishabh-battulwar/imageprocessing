@@ -11,11 +11,12 @@ class Image
 {
   private:
     //Image Data
+    
+
+  public:
     char *imgtype;
     int cols, rows;
     int channels;
-
-  public:
     unsigned char *imgdata;
 
     Image(char *type);
@@ -23,6 +24,8 @@ class Image
     ~Image() {};
     void read_image(const char *filename, int width, int height);
     void write_image(const char *filename, int width, int height);
+    int getvalue(int i, int j, int k);
+    void setvalue(int i, int j, int k, int value);
     int operator()(int K, int L, int M);
     
 };
@@ -67,13 +70,12 @@ Image::Image(char *type, int width, int height)
   }
 }
 
-
 void Image::read_image(const char *filename, int width, int height)
 {
   if (!strcmp(imgtype, "color"))
   {
-    cols = width;
-    rows = height;
+    //cols = width;
+    //rows = height;
 
     FILE *file;
     if (!(file=fopen(filename,"rb"))) 
@@ -89,8 +91,8 @@ void Image::read_image(const char *filename, int width, int height)
 
   else if (!strcmp(imgtype, "bw"))
   {
-    cols = width;
-    rows = height;
+    // cols = width;
+    // rows = height;
 
     FILE *file;
     if (!(file=fopen(filename,"rb"))) 
@@ -115,8 +117,8 @@ void Image::write_image(const char *filename, int width, int height)
 {
   if (!strcmp(imgtype, "color"))
   {
-    cols = width;
-    rows = height;
+    // cols = width;
+    // rows = height;
 
     FILE *file;
     if (!(file=fopen(filename,"wb"))) 
@@ -142,8 +144,8 @@ void Image::write_image(const char *filename, int width, int height)
 
   else if (!strcmp(imgtype, "bw"))
   {
-    cols = width;
-    rows = height;
+    // cols = width;
+    // rows = height;
 
     FILE *file;
 
@@ -161,15 +163,26 @@ void Image::write_image(const char *filename, int width, int height)
 }
 
 int Image::operator()(int K, int L, int M)
-    {
-    	if(!(strcmp(imgtype, "color")))
-      	return (int)imgdata[(K)*cols*channels + (L)*channels + M];
-      if(!(strcmp(imgtype, "bw")))
-      	return (int)imgdata[(K)*cols*channels + (L)*channels + M];
-      else
-        return 1;
-    }
+{
+	if(!(strcmp(imgtype, "color")))
+  	return (int)imgdata[(K)*cols*channels + (L)*channels + M];
+  if(!(strcmp(imgtype, "bw")))
+  	return (int)imgdata[(K)*cols*channels + (L)*channels + M];
+  else
+    return 1;
+}
 
+
+int Image::getvalue(int i, int j, int k)
+{
+  return (int)imgdata[(i)*cols*channels + (j)*channels + k];
+}
+
+
+void Image::setvalue(int i, int j, int k, int value)
+{
+  imgdata[(i)*cols*channels + (j)*channels + (k)] = value;
+}
 
 
 

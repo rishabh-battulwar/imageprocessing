@@ -15,6 +15,7 @@ class ImageProc
 		static void hist_equal_cumulative(const char *infile, const char *outfile, int width, int height);
 		static void hist_equal(const char *infile, const char *outfile, int width, int height);
 		static void oil_painting(const char *infile, const char *outfile, int width, int height, int window_size);
+		static void oil_paint_filter(Image &img_orig, Image &img_modified, int window_size);
 		
 };
 
@@ -23,17 +24,16 @@ void ImageProc::color_to_bw(const char *infile, const char *outfile, int width, 
 	Image img_color("color", width, height);
 	Image img_bw("bw", width, height);
 
-	img_color.read_image(infile, width, height);
+	img_color.read_image(infile, img_color.cols, img_color.rows);
 
-	for(int i = 0; i < height; i++)
-		for(int j = 0; j < width; j++)
-			img_bw.imgdata[(i)*width*1 + (j)*1 + 0] = img_color(i,j,0)*0.21 \
-													+ img_color(i,j,1)*0.72 \
-													+ img_color(i,j,2)*0.07; //Luminosity method
+	for(int i = 0; i < img_bw.rows; i++)
+		for(int j = 0; j < img_bw.cols; j++)
+			for(int k = 0; k < img_bw.channels; k++)
+				img_bw.setvalue(i,j,k,((img_color.getvalue(i,j,0)*0.21)\
+									  +(img_color.getvalue(i,j,1)*0.72)\
+									  +(img_color.getvalue(i,j,2)*0.07)));
 
-	img_bw.write_image(outfile, width, height);
-
-	//delete img_color;
+	img_bw.write_image(outfile, img_bw.cols, img_bw.rows);
 
 }
 
@@ -42,15 +42,15 @@ void ImageProc::image_resize(const char *infile, const char* outfile, int width,
 	Image img_orig("color", width, height);
 	Image img_resized("color", target_width, target_height);
 
-	img_orig.read_image(infile, width, height);
+	img_orig.read_image(infile, img_orig.cols, img_orig.rows);
 
 	float X, Y, x, y, a, b;
 
-	for(int i = 0; i < target_height; i++)
-		for(int j = 0; j < target_width; j++)
+	for(int i = 0; i < img_resized.rows; i++)
+		for(int j = 0; j < img_resized.cols; j++)
 		{			
-			x = height * (1.0 * i / target_height);
-			y = width  * (1.0 * j / target_width);
+			x = img_orig.rows * (1.0 * i / img_resized.rows);
+			y = img_orig.cols * (1.0 * j / img_resized.cols);
 
 			X = floor(x);
 			Y = floor(y);
@@ -61,16 +61,16 @@ void ImageProc::image_resize(const char *infile, const char* outfile, int width,
 			a = y - Y;
 			b = x - X;
 
-			for(int k = 0; k < 3; k++)
-				img_resized.imgdata[(i)*target_width*3 + (j)*3 + k] \
-				=  img_orig(X  ,Y  ,k)*(1.0-a)*(1.0-b)\
-				  +img_orig(X  ,Y+1,k)*(    a)*(1.0-b)\
-				  +img_orig(X+1,Y  ,k)*(1.0-a)*(    b)\
-				  +img_orig(X+1,Y+1,k)*(    a)*(    b);
+			for(int k = 0; k < img_resized.channels; k++)
+				img_resized.setvalue(i,j,k,((img_orig.getvalue(X  ,Y  ,k)*(1.0-a)*(1.0-b))
+				  						   +(img_orig.getvalue(X  ,Y+1,k)*(    a)*(1.0-b))
+				  						   +(img_orig.getvalue(X+1,Y  ,k)*(1.0-a)*(    b))
+				  						   +(img_orig.getvalue(X+1,Y+1,k)*(    a)*(    b))
+				  						   )
+									);
 		}
 
-	//img_resized.write_image(outfile, target_width, target_height);
-	img_resized.write_image(outfile, target_width, target_height);
+	img_resized.write_image(outfile, img_resized.cols, img_resized.rows);
 }
 
 void ImageProc::hist_equal_cumulative(const char *infile, const char *outfile, int width, int height)
@@ -235,71 +235,83 @@ void ImageProc::oil_painting(const char *infile, const char *outfile, int width,
 	Image img_orig("color", width, height);
 	Image img_oil("color", width, height);
 
+	img_orig.read_image(infile, img_orig.cols, img_orig.rows);
+	oil_paint_filter(img_orig, img_oil, window_size);
+
+
+	img_oil.write_image(outfile, img_oil.cols, img_oil.rows);
+}
+
+
+void ImageProc::oil_paint_filter(Image &img_orig, Image &img_modified, int window_size)
+{
 	int ws = window_size; //window_size
-	int wl = ((-1*ws) + 1) / 2;
-	int wr = (( 1*ws) - 1) / 2;
-	int values[ws*ws][3];
-	int max_occur_val[3], max_occurrence = 0, occurrence = 0;;
-	img_orig.read_image(infile, width, height);
+	int wleft = ((-1*ws) + 1) / 2;
+	int wright = (( 1*ws) - 1) / 2;
+	int values[ws*ws][img_orig.channels];
+	int max_occur_val[img_orig.channels], max_occurrence = 0, occurrence = 0;;
 	int index;
 
-	for(int i = 0; i < height; i++)
-	 	for(int j = 0; j < width; j++)
+	for(int i = 0; i < img_orig.rows; i++)
+	 	for(int j = 0; j < img_orig.cols; j++)
 	 	{
-			index = 0;
 			max_occur_val[0] = max_occur_val[1] = max_occur_val[2] = 0;
 			max_occurrence = 0;
-			for(int p = 0; p < ws*ws; p++)
-				values[p][0] = values[p][1] = values[p][2] = 0;
+			for(index = 0; index < ws*ws; index++)
+				values[index][0] = values[index][1] = values[index][2] = 0;
+			index = 0;
 
-			for(int m = wl; m <= wr; m++)
-				for(int n = wl; n <= wr; n++)
+			for(int m = wleft; m <= wright; m++)
+				for(int n = wleft; n <= wright; n++)
 				{	
-					if((i+m >= 0) && (i+m < height) && (j+n >= 0) && (j+n < width))
-						for(int k = 0; k < 3; k++)
+					if((i+m >= 0) && (i+m < img_orig.rows) && (j+n >= 0) && (j+n < img_orig.cols))
+						for(int k = 0; k < img_orig.channels; k++)
 						{
-							values[index][k] = img_orig(i+m, j+n, k);
+							values[index][k] = img_orig.getvalue(i+m, j+n, k);
 						}
 					else
-						for(int k = 0; k < 3; k++)
+						for(int k = 0; k < img_orig.channels; k++)
 							values[index][k] = 280;
 
 					index++;
 
 				}
 
-			for(int p = 0; p < ws*ws; p++)
+
+//############ FIXXX for img_orig.channels
+			for(index = 0; index < ws*ws; index++)
 			{	
-				if(!(values[p][0] == 280) && !(values[p][1] == 280) && !(values[p][0] == 280))
+				if(!(values[index][0] == 280) && !(values[index][1] == 280) && !(values[index][2] == 280))
 				{
 					occurrence = 0;
 					for(int r = 0; r < ws*ws; r++)
 					{
-						if(values[p][0] == values[r][0] &&
-						   values[p][1] == values[r][1] &&
-						   values[p][2] == values[r][2]) occurrence++;
+						if(values[index][0] == values[r][0] &&
+						   values[index][1] == values[r][1] &&
+						   values[index][2] == values[r][2]) 
+							occurrence++;
 
 					}
 
 					if(max_occurrence < occurrence) 
 					{
 						max_occurrence = occurrence;
-						max_occur_val[0] = values[p][0];
-						max_occur_val[1] = values[p][1];
-						max_occur_val[2] = values[p][2];
+						max_occur_val[0] = values[index][0];
+						max_occur_val[1] = values[index][1];
+						max_occur_val[2] = values[index][2];
 					}
 				}
 			}
+//#############
 
-			img_oil.imgdata[i*width*3 + j*3 + 0] = max_occur_val[0];
-			img_oil.imgdata[i*width*3 + j*3 + 1] = max_occur_val[1];
-			img_oil.imgdata[i*width*3 + j*3 + 2] = max_occur_val[2];
+			img_modified.setvalue(i,j,0,max_occur_val[0]);
+			img_modified.setvalue(i,j,1,max_occur_val[1]);
+			img_modified.setvalue(i,j,2,max_occur_val[2]);
 			
 			
 	 	}
-
-	img_oil.write_image(outfile, width, height);
 }
+
 
 
 #endif /*__IMAGE_PROC_H__*/

@@ -20,7 +20,7 @@ int main(int argc, char* argv[])
 {
 	int width = 512, height = 512;
 	int window_size = 5;
-	//int target_width = 700, target_height = 700;
+	int target_width = 700, target_height = 700;
 	char *type = "color";
 	if (argc < 3)
 		usage(argv[0]);
