@@ -16,6 +16,8 @@ class ImageProc
 		static void hist_equal(const char *infile, const char *outfile, int width, int height);
 		static void oil_painting(const char *infile, const char *outfile, int width, int height, int window_size);
 		static void oil_paint_filter(Image &img_orig, Image &img_modified, int window_size);
+		static void gaussian_filter(Image &img_orig, Image &img_modified, int window_size);
+		static void apply_gaussian_filter(const char *infile, const char *outfile, int width, int height, int window_size);
 		
 };
 
@@ -238,7 +240,6 @@ void ImageProc::oil_painting(const char *infile, const char *outfile, int width,
 	img_orig.read_image(infile, img_orig.cols, img_orig.rows);
 	oil_paint_filter(img_orig, img_oil, window_size);
 
-
 	img_oil.write_image(outfile, img_oil.cols, img_oil.rows);
 }
 
@@ -312,6 +313,98 @@ void ImageProc::oil_paint_filter(Image &img_orig, Image &img_modified, int windo
 	 	}
 }
 
+void ImageProc::apply_gaussian_filter(const char *infile, const char *outfile, int width, int height, int window_size)
+{
+	Image img_orig("bw", width, height);
+	Image img_modified("bw", width, height);
+
+	img_orig.read_image(infile, img_orig.cols, img_orig.rows);
+	//oil_paint_filter(img_orig, img_oil, window_size);
+	gaussian_filter(img_orig, img_modified, window_size);
+
+	img_modified.write_image(outfile, img_modified.cols, img_modified.rows);
+}
+
+void ImageProc::gaussian_filter(Image &img_orig, Image &img_modified, int window_size)
+{
+	int ws = window_size; //window_size
+	int wleft = ((-1*ws) + 1) / 2;
+	int wright = (( 1*ws) - 1) / 2;
+	int wtop = wleft;
+	int wbottom = wright;
+
+	double gaussian_kernel[ws][ws], kernel_sum = 0, normalized_gaussian_kernel[ws][ws];
+	double row_exp = 0, col_exp;
+	for(int i = wtop, row = 0; i <= wbottom; i++, row++)
+	{
+		col_exp = row_exp;
+
+		for(int j = wleft, col = 0; j <= wright; j++, col++)
+		{	
+			gaussian_kernel[row][col] = pow(2.0, col_exp);
+
+			if(j < 0)
+				col_exp++;
+			if(j >= 0)
+				col_exp--;
+		}
+
+		if(i < 0)
+			row_exp++;
+
+		if(i >= 0)
+			row_exp--;
+	}
+
+	for(int row = 0; row < ws; row++)
+		for(int col = 0; col < ws; col++)
+			kernel_sum += gaussian_kernel[row][col];
+
+	for(int row = 0; row < ws; row++)
+		for(int col = 0; col < ws; col++)
+			normalized_gaussian_kernel[row][col] = gaussian_kernel[row][col] / kernel_sum;
+
+	// for(int row = 0; row < ws; row++)
+	// {
+	// 	std::cout << " " << std::endl;
+	// 	for(int col = 0; col < ws; col++)
+	// 		std::cout << normalized_gaussian_kernel[row][col] << " " ;
+	// }
+
+
+	for(int i = 0; i < img_orig.rows; i++)
+	 	for(int j = 0; j < img_orig.cols; j++)
+	 		for(int k = 0; k < img_orig.channels; k++)
+		 	{
+				//max_occur_val[0] = max_occur_val[1] = max_occur_val[2] = 0;
+				//max_occurrence = 0;
+				int values[ws][ws];
+				for(int row = 0; row < ws; row++)
+					for(int col = 0; col < ws; col++)
+						values[row][col] = 0;
+				int values_avg = 0;
+
+				for(int m = wleft, row = 0; m <= wright; m++, row++)
+					for(int n = wtop, col = 0; n <= wbottom; n++, col++)
+					{	
+						if((i+m >= 0) && (i+m < img_orig.rows) && (j+n >= 0) && (j+n < img_orig.cols))
+						{
+							values[row][col] = img_orig.getvalue((i+m),(j+n),k) * normalized_gaussian_kernel[row][col];
+						}
+						else
+						{
+							values[row][col] = img_orig.getvalue((i+m),(j-n),k) * normalized_gaussian_kernel[row][col];
+						}
+					}
+
+				for(int row = 0; row < ws; row++)
+					for(int col = 0; col < ws; col++)
+						values_avg += values[row][col];
+
+				img_modified.setvalue(i,j,k,values_avg);
+			}
+
+}
 
 
 #endif /*__IMAGE_PROC_H__*/

@@ -129,17 +129,7 @@ void Image::write_image(const char *filename, int width, int height)
     if (!(fwrite(imgdata, sizeof(unsigned char), cols*rows*channels, file)))
        std::cout << "Error Writing" << std::endl;
     fclose(file);
-    
-    // for(int i = 0; i < size; i++)
-    // {
-    //   for(int j = 0; j < size; j++)
-    //   {
-    //     delete [] imgdata[i][j];
-    //   }
-    //   delete [] imgdata[i];
-    // }
-    // delete [] imgdata;
-
+   
   }
 
   else if (!strcmp(imgtype, "bw"))

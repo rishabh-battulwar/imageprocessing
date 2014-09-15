@@ -20,7 +20,7 @@ int main(int argc, char* argv[])
 {
 	int width = 512, height = 512;
 	int window_size = 5;
-	int target_width = 700, target_height = 700;
+	//int target_width = 700, target_height = 700;
 	char *type = "color";
 	if (argc < 3)
 		usage(argv[0]);
@@ -42,7 +42,8 @@ int main(int argc, char* argv[])
 	//ImageProc::image_resize(argv[1], argv[2], width, height, target_width, target_height);
 	//ImageProc::hist_equal_cumulative(argv[1], argv[2], width, height);
 	//ImageProc::hist_equal(argv[1], argv[2], width, height);
-	ImageProc::oil_painting(argv[1], argv[2], width, height, window_size);
+	//ImageProc::oil_painting(argv[1], argv[2], width, height, window_size);
+	ImageProc::apply_gaussian_filter(argv[1], argv[2], width, height, window_size);
 	
 	return 0;
 }
