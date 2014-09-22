@@ -2,6 +2,7 @@
 #define __IMAGE_PROC_H__
 
 #include <iostream>
+#include <fstream>
 #include <math.h>
 #include <stdlib.h>
 #include "Image.h"
@@ -29,7 +30,7 @@ class ImageProc
 		static void non_uniform_box_filter(Image &img_orig, Image &img_modified, int window_size);
 		static void outlier_filter(Image &img_orig, Image &img_modified, int window_size, float threshold);
 		static void median_filter(Image &img_orig, Image &img_modified, int window_size);
-		static void apply_bilateral_filter(const char *infile, const char *outfile, int width, int height, int window_size, int sigma, int sigma_simi);
+		static void apply_bilateral_filter(const char *infile, const char *outfile, int width, int height, int window_size, int sigma, int sigma_simi, int iter);
 		static void bilateral_filter(Image &img_orig, Image &img_modified, int window_size, int sigma_dist, int sigma_simi);
 		static void apply_non_local_mean(const char *infile, const char *outfile, int width, int height, int window_size, int region_size, int sigma, int h);
 		static void non_local_mean(Image &img_orig, Image &img_modified, int window_size, int region_size, int sigma, int h);
@@ -168,6 +169,23 @@ void ImageProc::hist_equal_cumulative(const char *infile, const char *outfile, i
 		for(int k = 0; k < 3; k++)
 			hist_cumulative[i][k] = hist_cumulative[i-1][k] + histogram_bins[i][k];
 
+	// std::ofstream file;
+	
+	// file.open("rt.txt");
+	// for(int i = 0; i < 256; i++)
+	// 	file << i << "\t" <<hist_cumulative[i][0] << "\n";
+	// file.close();
+
+	// file.open("gt.txt");
+	// for(int i = 0; i < 256; i++)
+	// 	file << i << "\t" <<hist_cumulative[i][1] << "\n";
+	// file.close();
+
+	// file.open("bt.txt");
+	// for(int i = 0; i < 256; i++)
+	// 	file << i << "\t" <<hist_cumulative[i][2] << "\n";
+	// file.close();
+
 
 	for(int i = 0; i < height; i++)
 		for(int j = 0; j < width; j++)
@@ -249,6 +267,23 @@ void ImageProc::hist_equal(const char *infile, const char *outfile, int width, i
 	for(int i = 1; i < 256; i++)
 		for(int k = 0; k < 3; k++)
 			hist_cumulative[i][k] = hist_cumulative[i-1][k] + histogram_bins[i][k];
+
+	// std::ofstream file;
+	
+	// file.open("rt2.txt");
+	// for(int i = 0; i < 256; i++)
+	// 	file << i << "\t" <<hist_cumulative[i][0] << "\n";
+	// file.close();
+
+	// file.open("gt2.txt");
+	// for(int i = 0; i < 256; i++)
+	// 	file << i << "\t" <<hist_cumulative[i][1] << "\n";
+	// file.close();
+
+	// file.open("bt2.txt");
+	// for(int i = 0; i < 256; i++)
+	// 	file << i << "\t" <<hist_cumulative[i][2] << "\n";
+	// file.close();
 
 	int hist_cumulative_copy[256][3] = {0};
 	int curr_bin_count = 0, prev_bin_count = 0;
@@ -451,33 +486,33 @@ void ImageProc::denoising(const char *infile, const char *outfile, int width, in
 			img_LenaB.setvalue(i,j,0,img_Lena.getvalue(i,j,2));
 		}
 
-	//outlier_filter(img_green, img_greenOut, window_size, threshold);
-	//outlier_filter(img_red, img_redOut, window_size, threshold);
-	//outlier_filter(img_blue, img_blueOut, window_size, threshold);
+	median_filter(img_red, img_redOut, window_size);
+	median_filter(img_green, img_greenOut, window_size);
+	median_filter(img_blue, img_blueOut, window_size);
 
 	for(int i = 0; i < img_orig.rows; i++)
 		for(int j = 0; j < img_orig.cols; j++)
 		{
-			//img_red.setvalue(i,j,0,img_redOut.getvalue(i,j,0));
+			img_red.setvalue(i,j,0,img_redOut.getvalue(i,j,0));
 			//img_green.setvalue(i,j,0,img_greenOut.getvalue(i,j,0));
-			//img_blue.setvalue(i,j,0,img_blueOut.getvalue(i,j,0));
+			img_blue.setvalue(i,j,0,img_blueOut.getvalue(i,j,0));
 		}
 
-	//gaussian_filter(img_red, img_redOut, window_size, sigma);
+	gaussian_filter(img_red, img_redOut, window_size, sigma);
 	//gaussian_filter(img_green, img_greenOut, window_size, sigma);
-	//gaussian_filter(img_blue, img_blueOut, window_size, sigma);
+	gaussian_filter(img_blue, img_blueOut, window_size, sigma);
 	
-	// float PSNR_red   = get_PSNR(img_red, img_redOut);
-	// float PSNR_green = get_PSNR(img_green, img_greenOut);
-	// float PSNR_blue  = get_PSNR(img_blue, img_blueOut);
+	float PSNR_red   = get_PSNR(img_red, img_redOut);
+	float PSNR_green = get_PSNR(img_green, img_greenOut);
+	float PSNR_blue  = get_PSNR(img_blue, img_blueOut);
 
-	// float PSNR_LenaR   = get_PSNR(img_LenaR, img_redOut);
-	// float PSNR_LenaG   = get_PSNR(img_LenaG, img_greenOut);
-	// float PSNR_LenaB   = get_PSNR(img_LenaB, img_blueOut);
+	float PSNR_LenaR   = get_PSNR(img_LenaR, img_redOut);
+	float PSNR_LenaG   = get_PSNR(img_LenaG, img_greenOut);
+	float PSNR_LenaB   = get_PSNR(img_LenaB, img_blueOut);
 
-	// std::cout << "PSNR_red : " << PSNR_red << "\nPSNR_green : " << PSNR_green\
-	// 			<< "\nPSNR_blue : " << PSNR_blue << "\nPSNR_LenaR : " << PSNR_LenaR << "\nPSNR_LenaG: " << PSNR_LenaG\
-	// 			<< "\nPSNR_LenaB : " << PSNR_LenaB << std::endl;
+	std::cout << "PSNR_red : " << PSNR_red << "\nPSNR_green : " << PSNR_green\
+			<< "\nPSNR_blue : " << PSNR_blue << "\nPSNR_LenaR : " << PSNR_LenaR << "\nPSNR_LenaG: " << PSNR_LenaG\
+			<< "\nPSNR_LenaB : " << PSNR_LenaB << std::endl;
 	// hist_equal_proc(img_red, img_red_O);
 	// hist_equal_proc(img_blue, img_blue_O);
 	// hist_equal_proc(img_green, img_green_O);
@@ -485,27 +520,13 @@ void ImageProc::denoising(const char *infile, const char *outfile, int width, in
 	for(int i = 0; i < img_orig.rows; i++)
 		for(int j = 0; j < img_orig.cols; j++)
 		{
-			img_result.setvalue(i,j,0,img_red.getvalue(i,j,0));
-			img_result.setvalue(i,j,1,img_green.getvalue(i,j,0));
-			img_result.setvalue(i,j,2,img_blue.getvalue(i,j,0));
+			img_result.setvalue(i,j,0,img_redOut.getvalue(i,j,0));
+			img_result.setvalue(i,j,1,img_greenOut.getvalue(i,j,0));
+			img_result.setvalue(i,j,2,img_blueOut.getvalue(i,j,0));
 		}
 
 	img_result.write_image(outfile, img_result.cols, img_result.rows);
 
-
-
-
-	FILE *file1, *file2;
-	file1 = fopen("Lena.txt", "wb");
-	file2 = fopen("Lena_mixed.txt", "wb");
-	for(int i = 0; i < img_orig.rows; i++)
-		for(int j = 0; j < img_orig.cols; j++)
-		{
-			fprintf(file1, "%d %d: %d  %d  %d\n",i, j, img_red.getvalue(i,j,0), img_green.getvalue(i,j,0), img_blue.getvalue(i,j,0));
-			fprintf(file2, "%d %d: %d  %d  %d\n",i, j, img_LenaR.getvalue(i,j,0), img_LenaG.getvalue(i,j,0), img_LenaB.getvalue(i,j,0));
-		}
-		fclose(file1);
-		fclose(file2);
 }
 
 //#############################################################################################
@@ -835,14 +856,35 @@ int ImageProc::get_median(int *sorted_array, int size)
 //#############################################################################################
 //######### Bilateral Filter ##################################################################
 
-void ImageProc::apply_bilateral_filter(const char *infile, const char *outfile, int width, int height, int window_size, int sigma, int sigma_simi)
+void ImageProc::apply_bilateral_filter(const char *infile, const char *outfile, int width, int height, int window_size, int sigma, int sigma_simi, int iter)
 {
 	Image img_orig("color", width, height);
 	Image img_modified("color", width, height);
 	img_orig.read_image(infile, img_orig.cols, img_orig.rows);
+
+	// Image img_red("bw", img_orig.cols, img_orig.rows);
+	// Image img_blue("bw", img_orig.cols, img_orig.rows);
+	// Image img_green("bw", img_orig.cols, img_orig.rows);
+	// Image img_redOut("bw", img_orig.cols, img_orig.rows);
+	// Image img_greenOut("bw", img_orig.cols, img_orig.rows);
+	// Image img_blueOut("bw", img_orig.cols, img_orig.rows);
+
+	// for(int i = 0; i < img_orig.rows; i++)
+	// 	for(int j = 0; j < img_orig.cols; j++)
+	// 	{
+	// 		img_red.setvalue(i,j,0,img_orig.getvalue(i,j,0));
+	// 		img_green.setvalue(i,j,0,img_orig.getvalue(i,j,1));
+	// 		img_blue.setvalue(i,j,0,img_orig.getvalue(i,j,2));
+	// 	}
 	
-	for(int i = 0; i < 10; i++)
+	for(int i = 0; i < iter; i++)
 	{
+		median_filter(img_orig, img_modified, window_size);
+		for(int i = 0; i < img_orig.rows; i++)
+		for(int j = 0; j < img_orig.cols; j++)
+		for(int k = 0; k < img_orig.channels; k++)
+			img_orig.setvalue(i,j,k,img_modified.getvalue(i,j,k));
+
 		bilateral_filter(img_orig, img_modified, window_size, sigma, sigma_simi);
 		for(int i = 0; i < img_orig.rows; i++)
 		 	for(int j = 0; j < img_orig.cols; j++)
@@ -873,11 +915,11 @@ void ImageProc::bilateral_filter(Image &img_orig, Image &img_modified, int windo
         } 
 
 
-	for(int i = 0; i < img_orig.rows; i++)
-	 	for(int j = 0; j < img_orig.cols; j++)
+	for(int i = kernel_radius; i < img_orig.rows - kernel_radius; i++)
+	 	for(int j = kernel_radius; j < img_orig.cols - kernel_radius; j++)
 	 		for(int k = 0; k < img_orig.channels; k++)
 		 	{
-				int values[ws][ws];
+				float values[ws][ws];
 				for(int row = 0; row < ws; row++)
 					for(int col = 0; col < ws; col++)
 					{
@@ -897,16 +939,16 @@ void ImageProc::bilateral_filter(Image &img_orig, Image &img_modified, int windo
 						}
 						else
 						{
-							intensity_diff[row][col] = exp(-1.0 * ((pow((img_orig.getvalue((i+m),(j-n),k) - img_orig.getvalue(i,j,k)),2.0)) 
+							intensity_diff[row][col] = exp(-1.0 * ((pow((img_orig.getvalue((i-m),(j-n),k) - img_orig.getvalue(i,j,k)),2.0)) 
 													   /(2 * (sigma_simi*sigma_simi)))); 
 						}
-
+//std::cout << intensity_diff[row][col] << " " << img_orig.getvalue(i+m,j+n,k) << " " << img_orig(i,j,k) << " " << i+m << " " << j+n << " " << k << " " << std::endl;
 					}
 
 				for(int row = 0; row < ws; row++)
 				 	for(int col = 0; col < ws; col++)
 				 		normalization_factor_sum += kernel[row][col] * intensity_diff[row][col];
-
+//std::cout << "\nstart" << std::endl;
 				for(int m = -kernel_radius, row = 0; m <= kernel_radius; m++, row++)
 					for(int n = -kernel_radius, col = 0; n <= kernel_radius; n++, col++)
 					{	
@@ -914,11 +956,18 @@ void ImageProc::bilateral_filter(Image &img_orig, Image &img_modified, int windo
 							values[row][col] = img_orig.getvalue((i+m),(j+n),k) * kernel[row][col] * intensity_diff[row][col] / normalization_factor_sum;
 						else
 							values[row][col] = img_orig.getvalue((i+m),(j-n),k) * kernel[row][col] * intensity_diff[row][col] / normalization_factor_sum;
+						//std::cout << values[row][col] << " " << img_orig((i+m),(j+n),k) << " " << kernel[row][col] << " " << intensity_diff[row][col] << " " << normalization_factor_sum << std::endl;
 					}
 
 				for(int row = 0; row < ws; row++)
 					for(int col = 0; col < ws; col++)
+					{
+						//std::cout << values[row][col] << std::endl;
 						value += values[row][col];
+					}
+
+					//std::cout << value << std::endl;
+					//std::cout << img_orig.getvalue(i,j,k) << "\n " << std::endl;
 
 				img_modified.setvalue(i,j,k,value);
 			}
