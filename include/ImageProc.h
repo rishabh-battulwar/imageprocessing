@@ -1,3 +1,13 @@
+/*///////////////////////////////
+# EE569 Homework Assignment #1
+# Date: Sept 21, 2014
+# Name: Rishabh Battulwar
+# ID: 4438-1435-20
+# email: battulwa@usc.edu
+#
+# Compiled on CYGWIN with g++
+*/////////////////////////////////
+
 #ifndef __IMAGE_PROC_H__
 #define __IMAGE_PROC_H__
 
@@ -879,11 +889,11 @@ void ImageProc::apply_bilateral_filter(const char *infile, const char *outfile, 
 	
 	for(int i = 0; i < iter; i++)
 	{
-		median_filter(img_orig, img_modified, window_size);
-		for(int i = 0; i < img_orig.rows; i++)
-		for(int j = 0; j < img_orig.cols; j++)
-		for(int k = 0; k < img_orig.channels; k++)
-			img_orig.setvalue(i,j,k,img_modified.getvalue(i,j,k));
+		// median_filter(img_orig, img_modified, window_size);
+		// for(int i = 0; i < img_orig.rows; i++)
+		// for(int j = 0; j < img_orig.cols; j++)
+		// for(int k = 0; k < img_orig.channels; k++)
+		// 	img_orig.setvalue(i,j,k,img_modified.getvalue(i,j,k));
 
 		bilateral_filter(img_orig, img_modified, window_size, sigma, sigma_simi);
 		for(int i = 0; i < img_orig.rows; i++)
