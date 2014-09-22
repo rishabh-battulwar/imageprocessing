@@ -1,0 +1,64 @@
+# EE569 Homework Assignment #1
+# Date: Sept 21, 2014
+# Name: Rishabh Battulwar
+# ID: 4438-1435-20
+# email: battulwa@usc.edu
+#
+# Compiled on CYGWIN with g++
+
+EE569_hw1_4438143520_BattulwarRishabh_Report.pdf has the report
+
+EE569_hw1_4438143520_BattulwarRishabh_code.txt has the all the code for verification
+
+EE569_hw1_4438143520_BattulwarRishabh_code.zip
+Unzip the above archive to extract the src code and include files. It contains a Makefile.
+Go to the directory where you extracted the archive and type 'make' in the terminal. You will need g++ to compile the program. It produces two folders.
+1)build = it contains the executable 'Main' and the object file
+2)images = this is where you need to place your input images if you want to use it the same way as shown in example commands
+
+go to /build and type './Main' and press enter. You will see all the commands to run the solutions to all individual problems in the homework along with their examples.
+
+Else you can view the following commands to execute different solutions
+
+General Usage:   ./Main   -prob {method_name} infile outfile [type] [-w width] [-h height] [-tw target_width] [-th target_height] [-ws window_size]  
+  [Specific Usage]:   
+
+  Problem 1.a. Usage:   ./Main   -prob color_to_bw -i <input file path> -o <output file path> [-w 'width'] [-h 'height']  
+      -----> Example:   ./Main   -prob color_to_bw -i ../images/mandril.raw -o ../images/mandril_bw.raw -w 512 -h 512    
+
+  Problem 1.b. Usage:   ./Main   -prob image_resize -i <input file path> -o <output file path> [-w 'width'] [-h 'height'] [-tw 'target_width'] [-th 'target_height]  
+      -----> Example:   ./Main   -prob image_resize -i ../images/pepper.raw -o ../images/pepper_scale.raw -w 512 -h 512 -tw 700 -th 700    
+
+  Problem 2.a1 Usage:   ./Main   -prob hist_eq_cum -i <input file path> -o <output file path> [-w 'width'] [-h 'height']  
+      -----> Example:   ./Main   -prob hist_eq_cum -i ../images/Girl.raw -o ../images/Girl_hist_eq_cum.raw -w 256 -h 256   
+
+  Problem 2.a2 Usage:   ./Main   -prob hist_equal -i <input file path> -o <output file path> [-w 'width'] [-h 'height']  
+      -----> Example:   ./Main   -prob hist_equal -i ../images/Girl.raw -o ../images/Girl_hist_eq.raw -w 256 -h 256    
+
+  Problem 2.b. Usage:   ./Main   -prob oil_paint_effect -i <input file path> -o <output file path> [-w 'width'] [-h 'height'] [-ws 'window_size']  
+      -----> Example:   ./Main   -prob oil_paint_effect -i ../images/Trojan_256.raw -o ../images/Trojan_256_oil.raw -w 384 -h 384 -ws 3    
+
+  Problem 2.c. Usage:   ./Main   -prob special_effect -i <input file path> -o <output file path> [-w 'width'] [-h 'height']  
+      -----> Example:   ./Main   -prob special_effect -i ../images/chat.raw -o ../images/chat_effect.raw -w 481 -h 321    
+
+  Problem 3.a. Usage:   ./Main   -prob denoising -i <input file path> -o <output file path> [-w 'width'] [-h 'height'] [-sigma 'value'] [-thresh 'threshold_value']  
+      -----> Example:   ./Main   -prob denoising -i ../images/Lena_mixed.raw -o ../images/Lena_clean.raw -w 512 -h 512 -sigma 3 -thresh 20.0    
+
+  Problem 3.b. Usage:   ./Main   -prob bilateral_filter -i <input file path> -o <output file path> [-w 'width'] [-h 'height'] [-tw 'target_width'] [-th 'target_height] [-sigma 'value'] [-sigma_sim 'sigma_similarity'] [-iter '#iterations']  
+      -----> Example:   ./Main   -prob bilateral_filter -i ../images/pepper.raw -o ../images/pepper_scale.raw -w 512 -h 512 -ws 3 -sigma 2 -sigma_sim 20 -iter 5    
+
+  Problem 3.c. Usage:   ./Main   -prob non_local_mean -i <input file path> -o <output file path> [-w 'width'] [-h 'height'] [-tw 'target_width'] [-th 'target_height] [-rs 'region_size'] [-sigma 'value'] [-h 'h_value']  
+      -----> Example:   ./Main   -prob non_local_mean -i ../images/pepper.raw -o ../images/pepper_scale.raw -w 512 -h 512 -rs 5 -sigma 3 -h 5    
+
+####     DEFAULTS    ####"  
+ type :'bw'||'color' ; default: 'color'"  
+ -w width : (default) 512" 				 
+ -h height : (default) 512" 			 
+ -tw target_width : (default) 700" 		 
+ -sigma : (default) 1" 	 
+ -sigma_sim : (default) 20" 	 
+ -rs : (default) 5" 	 
+ -thresh : (default) 20.0" 	 
+ -iter : (default) 5" 	 
+ -infile : (default) ../images/mandril.raw" 	 
+ -outfile : (default) ../images/mandril_bw.raw" 	 
