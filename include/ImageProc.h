@@ -15,6 +15,7 @@
 #include <fstream>
 #include <math.h>
 #include <stdlib.h>
+#include <limits>
 #include "Image.h"
 
 //#############################################################################################
@@ -50,7 +51,15 @@ class ImageProc
 		static void mergesort(int *a, int low, int high);
 		static void merge(int *a, int low, int high, int mid);
 		static int get_median(int *sorted_array, int size);
-		
+		static void get_histogram(Image &img, int histogram_bins[256]);
+		static void get_cumulative_histogram(int histogram_bins[256], int hist_cumulative[256]);
+
+		static void apply_sobel_operator(const char *infile, const char *outfile, int width, int height);
+		static void sobel_edge_detector(Image &img_orig, Image &img_modified);
+		static int func_gradient(int **operator_mask, Image &img_orig, int x, int y, int z, int window_size);
+		static void apply_LoG_operator(const char *infile, const char *outfile, int width, int height);
+		static void LoG_edge_detector(Image &img_orig, Image &img_modified);
+		static int check_zero_crossing(Image &img_modified_copy, int i, int j, int k);
 };
 
 //#############################################################################################
@@ -1145,5 +1154,309 @@ void ImageProc::hist_equal_proc(Image &img_orig, Image &img_modified)
 	//img_modified.write_image(outfile, width, height);
 }
 
+
+void ImageProc::apply_sobel_operator(const char *infile, const char *outfile, int width, int height)
+{
+	Image img_orig("bw", width, height);
+	Image img_modified("bw", width, height);
+	img_orig.read_image(infile, img_orig.cols, img_orig.rows);
+	
+	sobel_edge_detector(img_orig, img_modified);
+	std::cout << img_modified.getvalue(1,1,0) << std::endl;
+	img_modified.write_image(outfile, img_modified.cols, img_modified.rows);
+}
+
+void ImageProc::sobel_edge_detector(Image &img_orig, Image &img_modified)
+{
+	int **sobel_opX, **sobel_opY;
+	sobel_opX = new int *[3];
+	sobel_opY = new int *[3];
+	for(int i = 0; i < 3; i++)
+	{
+		sobel_opX[i] = new int[3];
+		sobel_opY[i] = new int[3];
+	}
+
+	sobel_opX[0][0] = -1;	sobel_opX[0][1] = 0;	sobel_opX[0][2] = 1;
+	sobel_opX[1][0] = -2;	sobel_opX[1][1] = 0;	sobel_opX[1][2] = 2;
+	sobel_opX[2][0] = -1;	sobel_opX[2][1] = 0;	sobel_opX[2][2] = 1;
+
+	sobel_opY[0][0] = -1;	sobel_opY[0][1] = -2;	sobel_opY[0][2] = -1;
+	sobel_opY[1][0] = 0;	sobel_opY[1][1] = 0;	sobel_opY[1][2] = 0;
+	sobel_opY[2][0] = 1;	sobel_opY[2][1] = 2;	sobel_opY[2][2] = 1;
+	int sum = 0;
+	int Gx[img_orig.rows][img_orig.cols];
+	int Gy[img_orig.rows][img_orig.cols];
+	for(int i = 0; i < img_orig.rows; i++)
+		for(int j = 0; j < img_orig.cols; j++)
+		{
+			Gx[i][j] = 0;
+			Gy[i][j] = 0;
+		}
+	int minGx = std::numeric_limits<int>::max();
+	int minGy = std::numeric_limits<int>::max();
+	int maxGx = std::numeric_limits<int>::min();
+	int maxGy = std::numeric_limits<int>::min();
+	for(int i = 0; i < img_orig.rows; i++)
+		for(int j = 0; j < img_orig.cols; j++)
+			for(int k = 0; k < img_orig.channels; k++)
+			{
+				if((i-1)>=0 && (i+1)<img_orig.rows && (j-1)>=0 && (j+1)<img_orig.cols)
+				{
+					Gx[i][j] = func_gradient(sobel_opX, img_orig, i, j, k, 3);
+					if(Gx[i][j] < minGx) minGx = Gx[i][j];
+					if(Gx[i][j] > maxGx) maxGx = Gx[i][j];
+					
+					Gy[i][j] = func_gradient(sobel_opY, img_orig, i, j, k, 3);
+					if(Gy[i][j] < minGy) minGy = Gy[i][j];
+					if(Gy[i][j] > maxGy) maxGy = Gy[i][j];
+
+					//sum = abs(Gx[i][j]) + abs(Gy[i][j]);
+					//sum = sum > 255 ? 255 : sum;
+					//sum = sum < 0   ? 0   : sum;
+					//img_modified.setvalue(i,j,k,sum);
+				}
+				
+			}
+
+	//Normalize Gradient values
+	int abs_minGx = abs(minGx);
+	int abs_minGy = abs(minGy);
+	maxGx = maxGx + abs_minGx;
+	maxGy = maxGy + abs_minGy;
+	std::cout << minGx << " " << maxGx << std::endl;
+
+	for(int i = 0; i < img_orig.rows; i++)
+		for(int j = 0; j < img_orig.cols; j++)
+		{
+			Gx[i][j] = Gx[i][j] + abs_minGx;
+			Gx[i][j] = (int)(1.0*Gx[i][j]*255/maxGx);
+			Gy[i][j] = Gy[i][j] + abs_minGy;
+			Gy[i][j] = (int)(1.0*Gy[i][j]*255/maxGy);
+		}
+
+	int nGradient;
+	for(int i = 0; i < img_orig.rows; i++)
+		for(int j = 0; j < img_orig.cols; j++)
+			for(int k = 0; k < img_orig.channels; k++)
+			{
+				if((i-1)>=0 && (i+1)<img_orig.rows && (j-1)>=0 && (j+1)<img_orig.cols)
+				{
+					//nGradient = (int)sqrt(Gx[i][j]*Gx[i][j] + Gy[i][j]*Gy[i][j]);
+					//img_modified.setvalue(i,j,k,nGradient);
+					img_modified.setvalue(i,j,k,Gx[i][j]);
+					// if(nGradient < 50 || (i == 135 && j == 133))
+					// {
+					// 	std::cout << i << " " << j << " " << Gx[i][j] << " " << Gy[i][j] << " " << nGradient << " " << img_modified.getvalue(i,j,k) << std::endl;
+					// }
+				}
+				
+			}
+
+	//std::cout << "Hey Man " << Gx[127][127] << std::endl;
+	Image img_modified_copy = img_modified;
+	int histogram_bins[256], hist_cumulative[256];
+	get_histogram(img_modified, histogram_bins);
+	get_cumulative_histogram(histogram_bins, hist_cumulative);
+
+	int threshold = (int)(0.9*hist_cumulative[255]);
+	std::cout << threshold << " " << hist_cumulative[255] << std::endl;
+
+	for(int i = 0; i < 256; i++)
+	{
+		if(hist_cumulative[i] > threshold)
+		{
+			threshold = i-1;
+			break;
+		}
+	}
+	std::cout << threshold << std::endl;
+	for(int i = 0; i < img_modified.rows; i++)
+		for(int j = 0; j < img_modified.cols; j++)
+			for(int k = 0; k < img_modified.channels; k++)
+			{
+				if((i-1)>=0 && (i+1)<img_modified.rows && (j-1)>=0 && (j+1)<img_modified.cols)
+				{
+					if(img_modified.getvalue(i,j,k) < threshold)
+						img_modified.setvalue(i,j,k,0);
+					else
+						img_modified.setvalue(i,j,k,255);
+					//nGradient = (int)sqrt(Gx[i][j]*Gx[i][j] + Gy[i][j]*Gy[i][j]);
+					//img_modified.setvalue(i,j,k,nGradient);
+					// if(nGradient < 50 || (i == 210 && j == 239))
+					// {
+					// 	std::cout << i << " " << j << " " << Gx[i][j] << " " << Gy[i][j] << " " << nGradient << " " << img_modified.getvalue(i,j,k) << std::endl;
+					// }
+				}
+			}
+}
+
+int ImageProc::func_gradient(int **operator_mask, Image &img_orig, int x, int y, int z, int window_size)
+{
+	int result = 0;
+	for(int m = -window_size/2, p = 0; m <= window_size/2; m++, p++)
+		for(int n = -window_size/2, q = 0; n <= window_size/2; n++, q++)
+		{
+			result += img_orig.getvalue((x+m),(y+n),z) * operator_mask[p][q];
+		}
+
+	return result;
+}
+
+void ImageProc::get_histogram(Image &img_orig, int histogram_bins[256])
+{
+	for(int i = 0; i < 256; i++)
+	{
+		histogram_bins[i] = 0;
+	}
+
+	for(int i = 0; i < img_orig.rows; i++)
+		for(int j = 0; j < img_orig.cols; j++)
+			if((img_orig.getvalue(i,j,0) >= 0) && (img_orig.getvalue(i,j,0) < 256))
+				histogram_bins[img_orig.getvalue(i,j,0)]++;
+
+}
+
+void ImageProc::get_cumulative_histogram(int histogram_bins[256], int hist_cumulative[256])
+{
+	hist_cumulative[0] = histogram_bins[0];
+	for(int i = 1; i < 256; i++)
+		hist_cumulative[i] = hist_cumulative[i-1] + histogram_bins[i];
+}
+
+
+void ImageProc::apply_LoG_operator(const char *infile, const char *outfile, int width, int height)
+{
+	Image img_orig("bw", width, height);
+	Image img_modified("bw", width, height);
+	img_orig.read_image(infile, img_orig.cols, img_orig.rows);
+	
+	LoG_edge_detector(img_orig, img_modified);
+	//std::cout << img_modified.getvalue(1,1,0) << std::endl;
+	img_modified.write_image(outfile, img_modified.cols, img_modified.rows);
+
+}
+
+void ImageProc::LoG_edge_detector(Image &img_orig, Image &img_modified)
+{
+	int **LoG_kernel;
+	LoG_kernel = new int *[3];
+	for(int i = 0; i < 3; i++)
+		LoG_kernel[i] = new int[3];
+
+	LoG_kernel[0][0] =  0;	LoG_kernel[0][1] = -1;	LoG_kernel[0][2] =  0;
+	LoG_kernel[1][0] = -1;	LoG_kernel[1][1] =  4;	LoG_kernel[1][2] = -1;
+	LoG_kernel[2][0] =  0;	LoG_kernel[2][1] = -1;	LoG_kernel[2][2] =  0;
+
+	int Gradient_LoG[img_orig.rows][img_orig.cols];
+	for(int i = 0; i < img_orig.rows; i++)
+		for(int j = 0; j < img_orig.cols; j++)
+		{
+			Gradient_LoG[i][j] = 0;
+		}
+	int minGradient = std::numeric_limits<int>::max();
+	int maxGradient = std::numeric_limits<int>::min();
+	for(int i = 0; i < img_orig.rows; i++)
+		for(int j = 0; j < img_orig.cols; j++)
+			for(int k = 0; k < img_orig.channels; k++)
+			{
+				if((i-1)>=0 && (i+1)<img_orig.rows && (j-1)>=0 && (j+1)<img_orig.cols)
+				{
+					Gradient_LoG[i][j] = func_gradient(LoG_kernel, img_orig, i, j, k, 3);
+					if(Gradient_LoG[i][j] < minGradient) minGradient = Gradient_LoG[i][j];
+					if(Gradient_LoG[i][j] > maxGradient) maxGradient = Gradient_LoG[i][j];
+					
+					
+					//sum = abs(Gx[i][j]) + abs(Gy[i][j]);
+					//sum = sum > 255 ? 255 : sum;
+					//sum = sum < 0   ? 0   : sum;
+					//img_modified.setvalue(i,j,k,sum);
+				}
+				
+			}
+
+	//Normalize Gradient values
+	int abs_minGradient = abs(minGradient);
+	maxGradient = maxGradient + abs_minGradient;
+	//std::cout << minGx << " " << maxGx << std::endl;
+
+	for(int i = 0; i < img_orig.rows; i++)
+		for(int j = 0; j < img_orig.cols; j++)
+		{
+			Gradient_LoG[i][j] = Gradient_LoG[i][j] + abs_minGradient;
+			Gradient_LoG[i][j] = (int)(1.0*Gradient_LoG[i][j]*255/maxGradient);
+		}
+
+	//int nGradient;
+	for(int i = 0; i < img_orig.rows; i++)
+		for(int j = 0; j < img_orig.cols; j++)
+			for(int k = 0; k < img_orig.channels; k++)
+			{
+				if((i-1)>=0 && (i+1)<img_orig.rows && (j-1)>=0 && (j+1)<img_orig.cols)
+				{
+					//nGradient = (int)sqrt(Gx[i][j]*Gx[i][j] + Gy[i][j]*Gy[i][j]);
+					//img_modified.setvalue(i,j,k,nGradient);
+					img_modified.setvalue(i,j,k,Gradient_LoG[i][j]);
+					// if(nGradient < 50 || (i == 135 && j == 133))
+					// {
+					// 	std::cout << i << " " << j << " " << Gx[i][j] << " " << Gy[i][j] << " " << nGradient << " " << img_modified.getvalue(i,j,k) << std::endl;
+					// }
+				}
+				
+			}
+
+	for(int i = 0; i < img_orig.rows; i++)
+		for(int j = 0; j < img_orig.cols; j++)
+			for(int k = 0; k < img_orig.channels; k++)
+			{
+				if((i-1)>=0 && (i+1)<img_orig.rows && (j-1)>=0 && (j+1)<img_orig.cols)
+				{
+					if      (img_modified.getvalue(i,j,k) < 100)	img_modified.setvalue(i,j,k,64);
+					else if (img_modified.getvalue(i,j,k) > 130)	img_modified.setvalue(i,j,k,192);
+					else 											img_modified.setvalue(i,j,k,128);
+				}
+				
+			}
+
+	Image img_modified_copy("bw", img_modified.cols, img_modified.rows);
+
+	for(int i = 0; i < img_orig.rows; i++)
+		for(int j = 0; j < img_orig.cols; j++)
+			for(int k = 0; k < img_orig.channels; k++)
+				img_modified_copy.setvalue(i,j,k,img_modified.getvalue(i,j,k));
+
+	int zero_crossing;
+	for(int i = 0; i < img_orig.rows; i++)
+		for(int j = 0; j < img_orig.cols; j++)
+			for(int k = 0; k < img_orig.channels; k++)
+			{
+				if((i-1)>=0 && (i+1)<img_orig.rows && (j-1)>=0 && (j+1)<img_orig.cols)
+				{
+					zero_crossing = check_zero_crossing(img_modified_copy, i, j, k);
+					if(zero_crossing == 0) 	img_modified.setvalue(i,j,k,255);
+					else					img_modified.setvalue(i,j,k,0);
+				}
+				
+			}
+
+}
+
+int ImageProc::check_zero_crossing(Image &img_modified_copy, int i, int j, int k)
+{
+	if(img_modified_copy.getvalue(i,j,k) != 128)
+	{
+	 	return (0);
+	}
+	else if(	(img_modified_copy.getvalue((i),(j-1),k) == 64 && img_modified_copy.getvalue((i),(j+1),k) == 192)
+			||	(img_modified_copy.getvalue((i-1),(j-1),k) == 64 && img_modified_copy.getvalue((i+1),(j+1),k) == 192)
+			||	(img_modified_copy.getvalue((i-1),(j),k) == 64 && img_modified_copy.getvalue((i+1),(j),k) == 192)
+			||	(img_modified_copy.getvalue((i-1),(j+1),k) == 64 && img_modified_copy.getvalue((i+1),(j-1),k) == 192)
+			||	(img_modified_copy.getvalue((i),(j-1),k) == 192 && img_modified_copy.getvalue((i),(j+1),k) == 64)
+			||	(img_modified_copy.getvalue((i-1),(j-1),k) == 192 && img_modified_copy.getvalue((i+1),(j+1),k) == 64)
+			||	(img_modified_copy.getvalue((i-1),(j),k) == 192 && img_modified_copy.getvalue((i+1),(j),k) == 64)
+			||	(img_modified_copy.getvalue((i-1),(j+1),k) == 192 && img_modified_copy.getvalue((i+1),(j-1),k) == 64))
+		return (1);
+	else return(0);
+}
 
 #endif /*__IMAGE_PROC_H__*/

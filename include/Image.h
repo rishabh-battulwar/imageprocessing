@@ -40,6 +40,7 @@ class Image
     int getvalue(int i, int j, int k);
     void setvalue(int i, int j, int k, int value);
     int operator()(int K, int L, int M);
+    void operator=(Image img_copy);
     
 };
 
@@ -213,6 +214,22 @@ int Image::getvalue(int i, int j, int k)
 void Image::setvalue(int i, int j, int k, int value)
 {
   imgdata[(i)*cols*channels + (j)*channels + (k)] = value;
+}
+
+//#############################################################################################
+
+//#############################################################################################
+
+void Image::operator=(Image img_copy)
+{
+  strcpy(imgtype, img_copy.imgtype);
+  img_copy.rows = rows;
+  img_copy.cols = cols;
+  img_copy.channels = channels;
+  for(int i = 0; i < rows; i++)
+    for(int j = 0; j < cols; j++)
+      for(int k = 0; k < channels; k++)
+        img_copy.setvalue(i,j,k,getvalue(i,j,k));
 }
 
 //#############################################################################################

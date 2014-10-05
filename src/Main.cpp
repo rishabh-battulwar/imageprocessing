@@ -104,6 +104,8 @@ int main(int argc, char* argv[])
 	else if(!(strcmp(method_name, "denoising")))			ImageProc::denoising(infile, outfile, width, height, window_size, sigma, threshold);
 	else if(!(strcmp(method_name, "bilateral_filter")))		ImageProc::apply_bilateral_filter(infile, outfile, width, height, window_size, sigma, sigma_sim, iter);
 	else if(!(strcmp(method_name, "non_local_mean")))		ImageProc::apply_non_local_mean(infile, outfile, width, height, window_size, region_size, sigma, h);
+	else if(!(strcmp(method_name, "sobel")))				ImageProc::apply_sobel_operator(infile, outfile, width, height);
+	else if(!(strcmp(method_name, "LoG")))					ImageProc::apply_LoG_operator(infile, outfile, width, height);
 	else 
 	{
 		std::cout << "method_name doesn't match any method!" << std::endl;
