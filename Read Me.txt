@@ -1,0 +1,59 @@
+# EE569 Homework Assignment #3
+# Date: Nov 9, 2014
+# Name: Rishabh Battulwar
+# ID: 4438-1435-20
+# email: battulwa@usc.edu
+#
+# Compiled on CYGWIN with g++
+
+###############################################################################
+TO RUN THIS CODE ======> OPENCV LIBS AND HEADERS NEED TO BE LINKED AND INCLUDED
+###############################################################################
+
+EE569_hw3_4438143520_BattulwarRishabh_Report.pdf has the report
+
+EE569_hw3_4438143520_BattulwarRishabh_code.txt has the all the code for verification
+
+EE569_hw3_4438143520_BattulwarRishabh_code.zip
+
+Unzip the above archive to extract the src code and include files. It contains a Makefile.
+Go to the directory where you extracted the archive and type 'make' in the terminal. You will need g++ to compile the program. It produces two folders.
+1)build = it contains the executable 'Main' and the object file
+2)images = this is where you need to place your input images
+3)output_images = this is where you will find the output images
+
+go to /build and type './Main' and press enter. You will see all the commands to run the solutions to all individual problems in the homework along with their examples.
+
+Else you can view the following commands to execute different solutions
+
+General Usage:   ./Main   -prob {method_name} infile outfile [type] [-w width] [-h height] [-tw target_width] [-th target_height] [-ws window_size]  
+  [Specific Usage]:   
+
+  Problem 1.a. Usage:   ./Main   -prob geom_trans -i <input file path> -comp <component file path> [-w 'width'] [-h 'height'] [-cw 'componentImgWidth'] [-ch 'componentImgheight']  
+      -----> Example:   ./Main   -prob geom_trans -i ../images/Tiffany.raw -comp ../images/Components.raw -w 512 -h 512 -cw 350 -ch 350    
+
+  Problem 1.b. Usage:   ./Main   -prob shear -i <input file path> [-w 'width'] [-h 'height']
+      -----> Example:   ./Main   -prob shear -i ../images/Lena.raw -w 512 -h 512    
+
+  Problem 1.c. Usage:   ./Main   -prob warp -i <input file path> [-w 'width'] [-h 'height']  
+      -----> Example:   ./Main   -prob warp -i ../images/fruits.raw -w 512 -h 512   
+
+  Problem 2.   Usage:   ./Main   -prob ocr
+      -----> Example:   ./Main   -prob ocr
+
+  Problem 3.   Usage:   ./Main   -prob texture_class
+      -----> Example:   ./Main   -prob texture_class
+
+
+####     DEFAULTS    ####"  
+ type :'bw'||'color' ; default: 'color'"  
+ -w width : (default) 512" 				 
+ -h height : (default) 512" 			 
+ -tw target_width : (default) 700" 		 
+ -sigma : (default) 1" 	 
+ -sigma_sim : (default) 20" 	 
+ -rs : (default) 5" 	 
+ -thresh : (default) 20.0" 	 
+ -iter : (default) 5" 	 
+ -infile : (default) ../images/mandril.raw" 	 
+ -outfile : (default) ../images/mandril_bw.raw" 	 

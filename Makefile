@@ -1,5 +1,5 @@
-# EE569 Homework Assignment #1
-# Date: Sept 21, 2014
+# EE569 Homework Assignment #2
+# Date: Oct 19, 2014
 # Name: Rishabh Battulwar
 # ID: 4438-1435-20
 # email: battulwa@usc.edu
@@ -14,6 +14,7 @@ INCLUDES = -I./include
 Main : ./src/Main.cpp
 	if [ ! -d ./build ];	then	mkdir build;	fi
 	if [ ! -d ./images ];	then	mkdir images;	fi
+	if [ ! -d ./output_images ];	then	mkdir output_images;	fi
 	${CXX} ${CXXFLAGS} ${INCLUDES} -c ./src/Main.cpp && mv Main.o ./build/
 	${CXX} ${CXXFLAGS} ./build/Main.o -o ./build/Main
 
@@ -22,6 +23,7 @@ rebuild:
 	rm -rf ./build/Main ./build/Main.o
 	if [ ! -d ./build ];	then	mkdir build;	fi
 	if [ ! -d ./images ];	then	mkdir images;	fi
+	if [ ! -d ./output_images ];	then	mkdir output_images;	fi
 	${CXX} ${CXXFLAGS} ${INCLUDES} -c ./src/Main.cpp && mv Main.o ./build/
 	${CXX} ${CXXFLAGS} ./build/Main.o -o ./build/Main
 	

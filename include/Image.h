@@ -1,6 +1,6 @@
 /*///////////////////////////////
-# EE569 Homework Assignment #1
-# Date: Sept 21, 2014
+# EE569 Homework Assignment #2
+# Date: Oct 19, 2014
 # Name: Rishabh Battulwar
 # ID: 4438-1435-20
 # email: battulwa@usc.edu
@@ -68,6 +68,7 @@ Image::Image(char *type)
     rows = 512; //default
     imgdata = new unsigned char [cols*rows*channels];
   }
+  
 }
 
 //#############################################################################################
@@ -80,18 +81,19 @@ Image::Image(char *type, int width, int height)
   {
     imgtype = "bw";
     channels = 1;
-    cols = width; //default
-    rows = height; //default
+    cols = width; 
+    rows = height;
     imgdata = new unsigned char [cols*rows*channels];
   }
   else
   {
     imgtype = "color";
     channels = 3;
-    cols = width; //default
-    rows = height; //default
+    cols = width; 
+    rows = height;
     imgdata = new unsigned char [cols*rows*channels];
   }
+
 }
 
 //#############################################################################################
